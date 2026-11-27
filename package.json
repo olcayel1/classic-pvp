@@ -1,12 +1,1 @@
-{
-  "name": "classic-pvp-arena",
-  "version": "0.1.0",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.21.2",
-    "ws": "^8.18.0",
-    "three": "^0.170.0"
-  }
-}
+{"name":"classic-pvp-alpha","version":"1.0.0","scripts":{"start":"node server.js"},"dependencies":{"express":"^4.21.2","ws":"^8.18.0","three":"0.170.0"}}
