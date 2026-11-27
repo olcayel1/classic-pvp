@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Classic PvP v0.2</title>
+<title>Classic PvP v0.3</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;overflow:hidden;background:#111;color:white;font-family:Arial;touch-action:none}
@@ -17,15 +17,17 @@ h1{color:#e5c989}
 .bar{height:13px;background:#222;margin:5px 0;border:1px solid #777}
 #hp{height:100%;background:linear-gradient(#ee5544,#941111)}
 #mp{height:100%;background:linear-gradient(#4a9cff,#173c99)}
-#map{position:fixed;right:10px;top:10px;border:2px solid #a58b50;border-radius:50%;background:#222}
-#online{position:fixed;right:10px;top:120px;background:#111b;padding:5px}
+#map{position:fixed;right:10px;top:10px;border:2px solid #a58b50;border-radius:50%;background:#222;pointer-events:none}
+#online{position:fixed;right:10px;top:120px;background:#111b;padding:5px;pointer-events:none}
 #joy{position:fixed;left:20px;bottom:35px;width:120px;height:120px;background:#1117;border:2px solid #b6a477;border-radius:50%;touch-action:none}
 #stick{position:absolute;left:36px;top:36px;width:44px;height:44px;background:#b9a77caa;border:2px solid #ddd;border-radius:50%;pointer-events:none}
 #skills{position:fixed;bottom:20px;right:12px;display:grid;grid-template-columns:repeat(2,65px);gap:6px}
 #skills button{height:62px;padding:4px;font-size:23px;background:#28241ddd}
 #skills small{display:block;font-size:10px}
 #full{position:fixed;right:10px;top:150px;font-size:12px;padding:8px}
-#version{position:fixed;bottom:3px;left:50%;transform:translateX(-50%);font-size:10px;color:#ddd}
+#version{position:fixed;bottom:3px;left:50%;transform:translateX(-50%);font-size:10px;color:#ddd;pointer-events:none}
+#zoom{position:fixed;right:12px;top:195px;display:flex;gap:5px}
+#zoom button{padding:8px 13px}
 </style>
 </head>
 <body>
@@ -62,6 +64,11 @@ h1{color:#e5c989}
 <div id="online">Online: 0</div>
 <button id="full">TAM EKRAN</button>
 
+<div id="zoom">
+<button id="plus">+</button>
+<button id="minus">-</button>
+</div>
+
 <div id="joy"><div id="stick"></div></div>
 
 <div id="skills">
@@ -71,12 +78,14 @@ h1{color:#e5c989}
 <button id="cameraBtn">↻<small>KAMERA</small></button>
 </div>
 
-<div id="version">Classic PvP v0.2</div>
+<div id="version">Classic PvP v0.3</div>
 
 <script type="module">
 import * as THREE from '/three/three.module.js';
 
 const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x9bb4c7);
 scene.fog=new THREE.Fog(0x9bb4c7,40,100);
@@ -88,6 +97,9 @@ const renderer=new THREE.WebGLRenderer({antialias:false});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.setSize(innerWidth,innerHeight);
 document.body.prepend(renderer.domElement);
+
+const canvas=renderer.domElement;
+canvas.style.touchAction='none';
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x596044,2));
 
@@ -163,7 +175,17 @@ mesh(new THREE.ConeGeometry(1.5,3,7),
 
 const models=new Map();
 let players=[],myId=null,target=null;
-let swingUntil=0,camMode=0;
+let swingUntil=0;
+
+let yaw=0;
+let pitch=0.48;
+let distance=9;
+
+let smoothYaw=yaw;
+let smoothPitch=pitch;
+let smoothDistance=distance;
+
+let inputX=0,inputZ=0;
 
 const ws=new WebSocket(
 (location.protocol==='https:'?'wss://':'ws://')+location.host);
@@ -254,7 +276,8 @@ new THREE.CircleGeometry(0.65,16),
 shadow.rotation.x=-Math.PI/2;
 
 const label=document.createElement('canvas');
-label.width=256;label.height=64;
+label.width=256;
+label.height=64;
 const ctx=label.getContext('2d');
 ctx.font='bold 26px Arial';
 ctx.textAlign='center';
@@ -336,9 +359,21 @@ $('target').textContent=enemy?
 enemy.name+' HP: '+enemy.hp:'Hedef: Yok';
 };
 
-function move(x,z){
+function sendMovement(){
+const x=inputX*Math.cos(smoothYaw)+inputZ*Math.sin(smoothYaw);
+const z=-inputX*Math.sin(smoothYaw)+inputZ*Math.cos(smoothYaw);
 send({t:'move',x,z});
 }
+
+function move(x,z){
+inputX=x;
+inputZ=z;
+sendMovement();
+}
+
+setInterval(()=>{
+if(myId)sendMovement();
+},50);
 
 const joy=$('joy');
 let pointer=null;
@@ -348,7 +383,8 @@ const r=joy.getBoundingClientRect();
 let x=e.clientX-r.left-r.width/2;
 let z=e.clientY-r.top-r.height/2;
 const n=Math.max(1,Math.hypot(x,z)/40);
-x/=n;z/=n;
+x/=n;
+z/=n;
 $('stick').style.transform=
 `translate(${x}px,${z}px)`;
 move(x/40,z/40);
@@ -371,9 +407,72 @@ $('stick').style.transform='translate(0,0)';
 move(0,0);
 }
 
-joy.onpointerup=stop;
-joy.onpointercancel=stop;
-joy.onlostpointercapture=stop;
+function joyRelease(e){
+if(e.pointerId===pointer)stop();
+}
+
+joy.onpointerup=joyRelease;
+joy.onpointercancel=joyRelease;
+joy.onlostpointercapture=joyRelease;
+
+const touches=new Map();
+
+function pinch(){
+const a=[...touches.values()];
+return a.length===2?
+Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y):0;
+}
+
+canvas.addEventListener('pointerdown',e=>{
+if(!myId||touches.size>=2)return;
+canvas.setPointerCapture(e.pointerId);
+touches.set(e.pointerId,{
+x:e.clientX,y:e.clientY
+});
+});
+
+canvas.addEventListener('pointermove',e=>{
+const old=touches.get(e.pointerId);
+if(!old)return;
+
+const before=pinch();
+const dx=e.clientX-old.x;
+const dy=e.clientY-old.y;
+
+touches.set(e.pointerId,{
+x:e.clientX,y:e.clientY
+});
+
+if(touches.size===1){
+yaw-=dx*0.008;
+pitch=clamp(pitch+dy*0.006,0.08,1.35);
+}else if(touches.size===2){
+const after=pinch();
+if(before>0&&after>0)
+distance=clamp(distance*before/after,3.5,22);
+}
+});
+
+function release(e){
+touches.delete(e.pointerId);
+}
+
+canvas.addEventListener('pointerup',release);
+canvas.addEventListener('pointercancel',release);
+canvas.addEventListener('lostpointercapture',release);
+
+canvas.addEventListener('wheel',e=>{
+e.preventDefault();
+distance=clamp(distance+e.deltaY*0.015,3.5,22);
+},{passive:false});
+
+$('plus').onclick=()=>{
+distance=clamp(distance-1.5,3.5,22);
+};
+
+$('minus').onclick=()=>{
+distance=clamp(distance+1.5,3.5,22);
+};
 
 $('select').onclick=()=>{
 const me=players.find(p=>p.id===myId);
@@ -399,16 +498,27 @@ swingUntil=performance.now()+350;
 $('pot').onclick=()=>send({t:'pot'});
 
 $('cameraBtn').onclick=()=>{
-camMode=(camMode+1)%2;
+const me=models.get(myId);
+if(me){
+const desired=me.rotation.y+Math.PI;
+yaw=smoothYaw+Math.atan2(
+Math.sin(desired-smoothYaw),
+Math.cos(desired-smoothYaw));
+}
+pitch=0.48;
+distance=9;
 };
 
 $('full').onclick=async()=>{
 try{
 if(!document.fullscreenElement){
 await document.documentElement.requestFullscreen();
-try{await screen.orientation.lock('landscape')}catch{}
+try{
+await screen.orientation.lock('landscape');
+}catch{}
 }else{
 await document.exitFullscreen();
+try{screen.orientation.unlock()}catch{}
 }
 }catch{}
 };
@@ -437,11 +547,16 @@ keyboardMove();
 
 addEventListener('blur',()=>{
 keys.clear();
+touches.clear();
 stop();
 });
 
 document.addEventListener('visibilitychange',()=>{
-if(document.hidden)stop();
+if(document.hidden){
+keys.clear();
+touches.clear();
+stop();
+}
 });
 
 const ctx=$('map').getContext('2d');
@@ -473,8 +588,7 @@ renderer.setSize(innerWidth,innerHeight);
 
 camera.position.set(0,8,12);
 const clock=new THREE.Clock();
-const camTarget=new THREE.Vector3();
-const lookTarget=new THREE.Vector3();
+const focus=new THREE.Vector3();
 let started=false;
 
 function animate(){
@@ -491,7 +605,8 @@ if(!g)continue;
 g.position.x+=(g.userData.tx-g.position.x)*alpha;
 g.position.z+=(g.userData.tz-g.position.z)*alpha;
 
-const walking=!p.dead&&(Math.abs(p.dx)+Math.abs(p.dz)>0.05);
+const walking=!p.dead&&
+(Math.abs(p.dx)+Math.abs(p.dz)>0.05);
 
 if(walking){
 const angle=Math.atan2(p.dx,p.dz);
@@ -516,20 +631,28 @@ g.userData.arms[1].rotation.x=
 const me=models.get(myId);
 
 if(me){
-camTarget.set(me.position.x,
-camMode?11:5.5,
-me.position.z+(camMode?15:8));
+const a=1-Math.exp(-18*dt);
+
+smoothYaw+=(yaw-smoothYaw)*a;
+smoothPitch+=(pitch-smoothPitch)*a;
+smoothDistance+=(distance-smoothDistance)*a;
 
 if(!started){
-camera.position.copy(camTarget);
+focus.set(me.position.x,1.4,me.position.z);
 started=true;
 }
 
-camera.position.lerp(camTarget,
-1-Math.exp(-9*dt));
+focus.x+=(me.position.x-focus.x)*alpha;
+focus.z+=(me.position.z-focus.z)*alpha;
 
-lookTarget.set(me.position.x,1.4,me.position.z);
-camera.lookAt(lookTarget);
+camera.position.set(
+focus.x+Math.sin(smoothYaw)*Math.cos(smoothPitch)*smoothDistance,
+focus.y+Math.sin(smoothPitch)*smoothDistance,
+focus.z+Math.cos(smoothYaw)*Math.cos(smoothPitch)*smoothDistance
+);
+
+camera.lookAt(focus);
+
 }else{
 camera.lookAt(0,0,0);
 }
@@ -537,111 +660,8 @@ camera.lookAt(0,0,0);
 minimap();
 renderer.render(scene,camera);
 }
-</body><script type="module">
-import * as THREE from '/three/three.module.js';
 
-const canvas = document.querySelector('body > canvas');
-const originalLookAt = THREE.PerspectiveCamera.prototype.lookAt;
-
-let yaw = 0;
-let pitch = 0.48;
-let distance = 9;
-let heading = 0;
-const touches = new Map();
-
-const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
-
-THREE.PerspectiveCamera.prototype.lookAt = function(x,y,z){
-  if(!x || !x.isVector3){
-    return originalLookAt.call(this,x,y,z);
-  }
-
-  this.position.set(
-    x.x + Math.sin(yaw)*Math.cos(pitch)*distance,
-    x.y + Math.sin(pitch)*distance,
-    x.z + Math.cos(yaw)*Math.cos(pitch)*distance
-  );
-
-  return originalLookAt.call(this,x);
-};
-
-function pinch(){
-  const a = [...touches.values()];
-  return a.length===2 ?
-    Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y):0;
-}
-
-canvas.style.touchAction='none';
-
-canvas.addEventListener('pointerdown',e=>{
-  canvas.setPointerCapture(e.pointerId);
-  touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
-});
-
-canvas.addEventListener('pointermove',e=>{
-  const old=touches.get(e.pointerId);
-  if(!old)return;
-
-  const before=pinch();
-  const dx=e.clientX-old.x;
-  const dy=e.clientY-old.y;
-
-  touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
-
-  if(touches.size===1){
-    yaw-=dx*0.008;
-    pitch=clamp(pitch+dy*0.006,0.12,1.35);
-  }else if(touches.size===2){
-    const after=pinch();
-    if(after>0&&before>0)
-      distance=clamp(distance*before/after,3.5,22);
-  }
-});
-
-function release(e){
-  touches.delete(e.pointerId);
-}
-
-canvas.addEventListener('pointerup',release);
-canvas.addEventListener('pointercancel',release);
-canvas.addEventListener('lostpointercapture',release);
-
-canvas.addEventListener('wheel',e=>{
-  e.preventDefault();
-  distance=clamp(distance+e.deltaY*0.015,3.5,22);
-},{passive:false});
-
-const originalSend=WebSocket.prototype.send;
-
-WebSocket.prototype.send=function(data){
-  try{
-    const m=JSON.parse(data);
-
-    if(m.t==='move'){
-      const x=m.x;
-      const z=m.z;
-
-      m.x=x*Math.cos(yaw)+z*Math.sin(yaw);
-      m.z=-x*Math.sin(yaw)+z*Math.cos(yaw);
-
-      if(Math.hypot(m.x,m.z)>0.05)
-        heading=Math.atan2(m.x,m.z);
-
-      data=JSON.stringify(m);
-    }
-  }catch{}
-
-  return originalSend.call(this,data);
-};
-
-document.getElementById('cameraBtn').onclick=()=>{
-  yaw=heading+Math.PI;
-  pitch=0.48;
-  distance=9;
-};
-
-document.getElementById('version').textContent=
-'Classic PvP v0.3';
-
+animate();
 </script>
+</body>
 </html>
