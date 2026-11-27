@@ -3,27 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Classic PvP</title>
+<title>Classic PvP v0.2</title>
 <style>
-*{box-sizing:border-box;touch-action:none}
-body{margin:0;background:#111;color:white;font-family:Arial;overflow:hidden}
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#111;color:white;font-family:Arial;touch-action:none}
 canvas{display:block}
-#login{position:fixed;inset:0;background:#18251e;display:flex;align-items:center;justify-content:center;z-index:10}
-.panel{width:85%;max-width:340px;background:#302d26;padding:25px;border:2px solid #b89b56;border-radius:10px;text-align:center}
-input,select,button{padding:12px;margin:5px;border:1px solid #b89b56;border-radius:6px;background:#302d26;color:white;font-size:16px}
-.panel input,.panel select,.panel button{width:95%}
-#hud{position:fixed;top:12px;left:12px;background:#0009;padding:10px;border-radius:8px;min-width:160px;pointer-events:none}
-.bar{width:150px;height:12px;background:#333;margin:5px 0}
-#hp{height:100%;background:#c52c2c}
-#mp{height:100%;background:#287bd1}
-#pad{position:fixed;bottom:25px;left:15px;display:grid;grid-template-columns:repeat(3,52px)}
-#pad button{height:52px;margin:2px;background:#222b}
-#actions{position:fixed;bottom:25px;right:12px;display:flex;flex-direction:column}
-#actions button{height:58px;background:#382d1ddd}
-#status{position:fixed;top:12px;right:12px;background:#0009;padding:8px}
+#login{position:fixed;inset:0;background:radial-gradient(#39483a,#111b15);display:flex;align-items:center;justify-content:center;z-index:20}
+.panel{width:85%;max-width:340px;padding:24px;background:#211e18;border:2px solid #ae9255;border-radius:10px;text-align:center}
+input,select,button{background:#29261f;color:#eee;border:1px solid #a58b50;border-radius:6px;padding:12px;font-size:16px}
+.panel input,.panel select,.panel button{width:100%;margin:5px 0}
+h1{color:#e5c989}
+#hud{position:fixed;top:10px;left:10px;background:#151510dd;border:1px solid #96804b;padding:10px;border-radius:6px;width:165px;pointer-events:none}
+.bar{height:13px;background:#222;margin:5px 0;border:1px solid #777}
+#hp{height:100%;background:linear-gradient(#ee5544,#941111)}
+#mp{height:100%;background:linear-gradient(#4a9cff,#173c99)}
+#map{position:fixed;right:10px;top:10px;border:2px solid #a58b50;border-radius:50%;background:#222}
+#online{position:fixed;right:10px;top:120px;background:#111b;padding:5px}
+#joy{position:fixed;left:20px;bottom:35px;width:120px;height:120px;background:#1117;border:2px solid #b6a477;border-radius:50%;touch-action:none}
+#stick{position:absolute;left:36px;top:36px;width:44px;height:44px;background:#b9a77caa;border:2px solid #ddd;border-radius:50%;pointer-events:none}
+#skills{position:fixed;bottom:20px;right:12px;display:grid;grid-template-columns:repeat(2,65px);gap:6px}
+#skills button{height:62px;padding:4px;font-size:23px;background:#28241ddd}
+#skills small{display:block;font-size:10px}
+#full{position:fixed;right:10px;top:150px;font-size:12px;padding:8px}
+#version{position:fixed;bottom:3px;left:50%;transform:translateX(-50%);font-size:10px;color:#ddd}
 </style>
 </head>
 <body>
+
 <div id="login">
 <div class="panel">
 <h1>CLASSIC PvP</h1>
@@ -40,7 +46,7 @@ input,select,button{padding:12px;margin:5px;border:1px solid #b89b56;border-radi
 <option>Priest</option>
 </select>
 <button id="join">OYUNA GIR</button>
-<p id="message">Sunucuya baglaniliyor...</p>
+<p id="message">Baglaniliyor...</p>
 </div>
 </div>
 
@@ -51,79 +57,113 @@ input,select,button{padding:12px;margin:5px;border:1px solid #b89b56;border-radi
 <div id="np">NP: 0</div>
 <div id="target">Hedef: Yok</div>
 </div>
-<div id="status">Online: 0</div>
 
-<div id="pad">
-<span></span><button data-dir="0,-1">▲</button><span></span>
-<button data-dir="-1,0">◀</button>
-<button data-dir="0,0">■</button>
-<button data-dir="1,0">▶</button>
-<span></span><button data-dir="0,1">▼</button><span></span>
+<canvas id="map" width="104" height="104"></canvas>
+<div id="online">Online: 0</div>
+<button id="full">TAM EKRAN</button>
+
+<div id="joy"><div id="stick"></div></div>
+
+<div id="skills">
+<button id="select">◎<small>HEDEF</small></button>
+<button id="attack">⚔<small>SALDIR</small></button>
+<button id="pot">✚<small>HP / MP</small></button>
+<button id="cameraBtn">↻<small>KAMERA</small></button>
 </div>
 
-<div id="actions">
-<button id="select">HEDEF</button>
-<button id="attack">⚔ SALDIR</button>
-<button id="pot">HP / MP</button>
-</div>
+<div id="version">Classic PvP v0.2</div>
 
 <script type="module">
 import * as THREE from '/three/three.module.js';
 
 const $=id=>document.getElementById(id);
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x9bb5c4);
-scene.fog=new THREE.Fog(0x9bb5c4,45,110);
+scene.background=new THREE.Color(0x9bb4c7);
+scene.fog=new THREE.Fog(0x9bb4c7,40,100);
 
 const camera=new THREE.PerspectiveCamera(
-60,innerWidth/innerHeight,0.1,200);
+65,innerWidth/innerHeight,0.1,150);
 
 const renderer=new THREE.WebGLRenderer({antialias:false});
-renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.setSize(innerWidth,innerHeight);
 document.body.prepend(renderer.domElement);
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x596044,2));
-const sun=new THREE.DirectionalLight(0xffffff,2);
-sun.position.set(20,40,15);
+
+const sun=new THREE.DirectionalLight(0xffecd2,2);
+sun.position.set(20,35,15);
 scene.add(sun);
 
-function box(w,h,d,color,x,y,z){
-const mesh=new THREE.Mesh(
-new THREE.BoxGeometry(w,h,d),
+function mesh(geo,color,x,y,z,parent=scene){
+const m=new THREE.Mesh(geo,
 new THREE.MeshStandardMaterial({color}));
-mesh.position.set(x,y,z);
-scene.add(mesh);
-return mesh;
+m.position.set(x,y,z);
+parent.add(m);
+return m;
 }
 
-box(80,0.4,80,0x65754a,0,-0.2,0);
-box(80,0.05,7,0x9c9072,0,0.03,0);
+function box(w,h,d,c,x,y,z,parent=scene){
+return mesh(new THREE.BoxGeometry(w,h,d),c,x,y,z,parent);
+}
+
+function cylinder(a,b,h,c,x,y,z,parent=scene){
+return mesh(new THREE.CylinderGeometry(a,b,h,8),c,x,y,z,parent);
+}
+
+box(80,0.4,80,0x687b47,0,-0.2,0);
+
+for(let i=0;i<150;i++){
+let x=Math.sin(i*17.3)*38;
+let z=Math.cos(i*9.7)*38;
+box(2.5,0.015,2.5,
+i%2?0x72834e:0x627546,x,0.015,z);
+}
+
+for(let x=-38;x<=38;x+=2){
+for(let z=-2;z<=2;z+=2){
+box(1.92,0.08,1.92,
+(x+z)%4?0x9d998a:0x89877d,x,0.04,z);
+}
+}
 
 for(let i=-38;i<=38;i+=4){
-box(4,3,1,0x77776b,i,1.5,-40);
-box(4,3,1,0x77776b,i,1.5,40);
-box(1,3,4,0x77776b,-40,1.5,i);
-box(1,3,4,0x77776b,40,1.5,i);
+box(4,3,1,0x77776c,i,1.5,-40);
+box(4,3,1,0x77776c,i,1.5,40);
+box(1,3,4,0x77776c,-40,1.5,i);
+box(1,3,4,0x77776c,40,1.5,i);
 }
 
-for(let i=0;i<24;i++){
-const x=Math.sin(i*7.3)*35;
-const z=Math.cos(i*4.7)*32;
-if(Math.abs(z)<6)continue;
-box(1,3,1,0x5a3822,x,1.5,z);
-const tree=new THREE.Mesh(
-new THREE.ConeGeometry(2.5,5,6),
-new THREE.MeshStandardMaterial({color:0x294b28}));
-tree.position.set(x,5,z);
-scene.add(tree);
+function castle(x,color){
+for(let z of [-6,6]){
+cylinder(2.1,2.3,7,0x85847c,x,3.5,z);
+for(let i=0;i<8;i++){
+let a=i*Math.PI/4;
+box(0.7,1,0.7,0x99978a,
+x+Math.cos(a)*1.8,7.3,z+Math.sin(a)*1.8);
+}
+box(0.15,2.6,1.8,color,x,6,z);
+}
+box(1.2,5,8,0x85847c,x,2.5,0);
 }
 
-box(5,5,5,0x597b9c,-32,2.5,0);
-box(5,5,5,0x9c594c,32,2.5,0);
+castle(-35,0x2455aa);
+castle(35,0xaa2929);
+
+for(let i=0;i<28;i++){
+let x=Math.sin(i*7.3)*34;
+let z=Math.cos(i*4.7)*32;
+if(Math.abs(z)<8)continue;
+cylinder(0.22,0.45,3,0x64432b,x,1.5,z);
+mesh(new THREE.ConeGeometry(2,4,7),
+0x31572c,x,4,z);
+mesh(new THREE.ConeGeometry(1.5,3,7),
+0x416b35,x,5.5,z);
+}
 
 const models=new Map();
 let players=[],myId=null,target=null;
+let swingUntil=0,camMode=0;
 
 const ws=new WebSocket(
 (location.protocol==='https:'?'wss://':'ws://')+location.host);
@@ -133,140 +173,297 @@ if(ws.readyState===1)ws.send(JSON.stringify(data));
 }
 
 ws.onopen=()=>$('message').textContent='Sunucu hazir';
+
 ws.onclose=()=>{
 $('message').textContent='Baglanti kesildi. Sayfayi yenile.';
 $('login').style.display='flex';
 };
+
 ws.onerror=()=>$('message').textContent='Baglanti hatasi';
 
 $('join').onclick=()=>{
-if(ws.readyState!==1)return;
 send({t:'join',name:$('nick').value,
 team:$('team').value,c:$('cls').value});
 };
 
 function character(p){
 const g=new THREE.Group();
-const color=p.team==='Human'?0x3868c4:0xb83333;
+const color=p.team==='Human'?0x315ca6:0x9c3027;
+const steel=0xaeb8bf;
+const dark=0x454a50;
 
-function part(w,h,d,c,x,y,z){
-const m=new THREE.Mesh(
-new THREE.BoxGeometry(w,h,d),
-new THREE.MeshStandardMaterial({color:c}));
-m.position.set(x,y,z);
-g.add(m);
+const body=new THREE.Group();
+g.add(body);
+
+cylinder(0.42,0.29,0.8,steel,0,1.4,0,body);
+box(0.65,0.16,0.45,0x71532c,0,1,0,body);
+box(0.4,0.6,0.06,color,0,1.35,0.27,body);
+
+mesh(new THREE.SphereGeometry(0.3,10,8),
+steel,0,2.08,0,body);
+
+box(0.45,0.12,0.15,dark,0,2.07,0.25,body);
+box(0.08,0.23,0.08,steel,0,2.03,0.32,body);
+
+const legs=[];
+for(let s of [-1,1]){
+const leg=new THREE.Group();
+leg.position.set(s*0.22,0.95,0);
+body.add(leg);
+box(0.29,0.65,0.3,dark,0,-0.33,0,leg);
+box(0.32,0.22,0.48,steel,0,-0.8,0.09,leg);
+legs.push(leg);
 }
-part(0.9,1,0.55,color,0,1.4,0);
-part(0.5,0.5,0.5,0xbfc3c5,0,2.15,0);
-part(0.3,0.9,0.35,0x777777,-0.25,0.45,0);
-part(0.3,0.9,0.35,0x777777,0.25,0.45,0);
-part(0.3,0.9,0.3,color,-0.65,1.4,0);
-part(0.3,0.9,0.3,color,0.65,1.4,0);
-part(0.15,1.5,0.15,0xd5d5d5,0.8,1.5,0.3);
+
+const arms=[];
+for(let s of [-1,1]){
+const arm=new THREE.Group();
+arm.position.set(s*0.55,1.75,0);
+body.add(arm);
+mesh(new THREE.SphereGeometry(0.25,8,6),
+steel,0,0,0,arm);
+box(0.24,0.6,0.25,dark,0,-0.35,0,arm);
+box(0.26,0.3,0.28,steel,0,-0.5,0,arm);
+arms.push(arm);
+}
+
+const weapon=new THREE.Group();
+weapon.position.set(0,-0.6,0.15);
+arms[1].add(weapon);
+
+if(p.c==='Mage'||p.c==='Priest'){
+cylinder(0.06,0.08,1.9,0x77502e,0,0.5,0,weapon);
+mesh(new THREE.SphereGeometry(0.17,8,6),
+0x49b9ff,0,1.5,0,weapon);
+}else{
+box(0.1,0.35,0.1,0x674c28,0,0,0,weapon);
+box(0.4,0.08,0.13,0xc4a454,0,0.2,0,weapon);
+box(0.15,1.1,0.07,0xdbe1e5,0,0.8,0,weapon);
+mesh(new THREE.ConeGeometry(0.085,0.22,4),
+steel,0,1.45,0,weapon);
+}
+
+if(p.c==='Warrior'||p.c==='Priest'){
+cylinder(0.36,0.36,0.12,color,0,-0.4,0.25,arms[0])
+.rotation.x=Math.PI/2;
+}
+
+const shadow=mesh(
+new THREE.CircleGeometry(0.65,16),
+0x39432d,0,0.025,0,g);
+shadow.rotation.x=-Math.PI/2;
 
 const label=document.createElement('canvas');
 label.width=256;label.height=64;
 const ctx=label.getContext('2d');
-ctx.font='bold 25px Arial';
+ctx.font='bold 26px Arial';
 ctx.textAlign='center';
+ctx.strokeStyle='black';
+ctx.lineWidth=5;
+ctx.strokeText(p.name,128,35);
 ctx.fillStyle='white';
 ctx.fillText(p.name,128,35);
+
 const sprite=new THREE.Sprite(
 new THREE.SpriteMaterial({
 map:new THREE.CanvasTexture(label)
 }));
-sprite.scale.set(4,1,1);
-sprite.position.y=3;
+sprite.scale.set(3.6,0.9,1);
+sprite.position.y=2.9;
 g.add(sprite);
 
+g.position.set(p.x,0,p.z);
+g.userData={body,legs,arms,tx:p.x,tz:p.z};
 scene.add(g);
 return g;
 }
 
 ws.onmessage=e=>{
 const m=JSON.parse(e.data);
+
 if(m.t==='id'){
 myId=m.id;
 $('login').style.display='none';
 }
+
 if(m.t!=='state')return;
 players=m.players;
-$('status').textContent='Online: '+players.length;
+
+$('online').textContent='Online: '+players.length;
 
 for(const p of players){
 if(!models.has(p.id))
 models.set(p.id,character(p));
+
 const g=models.get(p.id);
+
+if(Math.hypot(g.position.x-p.x,g.position.z-p.z)>8)
 g.position.set(p.x,0,p.z);
+
+g.userData.tx=p.x;
+g.userData.tz=p.z;
 g.visible=!p.dead;
-if(p.dx||p.dz)
-g.rotation.y=Math.atan2(p.dx,p.dz);
 }
+
 for(const [id,g] of models){
 if(!players.some(p=>p.id===id)){
 scene.remove(g);
+g.traverse(o=>{
+if(o.geometry)o.geometry.dispose();
+if(o.material){
+if(o.material.map)o.material.map.dispose();
+o.material.dispose();
+}
+});
 models.delete(id);
 }
 }
+
 const me=players.find(p=>p.id===myId);
+
 if(me){
-$('info').textContent=me.dead?'Yeniden doguyorsun...':
-'Lv.65 '+me.c;
+$('info').textContent=me.dead?
+'Yeniden doguyorsun...':'Lv.65 '+me.c;
 $('hp').style.width=(me.hp/me.max*100)+'%';
 $('mp').style.width=(me.mp/me.mmax*100)+'%';
 $('np').textContent='NP: '+me.np;
 }
+
 const enemy=players.find(p=>p.id===target&&!p.dead);
+if(!enemy)target=null;
+
 $('target').textContent=enemy?
 enemy.name+' HP: '+enemy.hp:'Hedef: Yok';
 };
 
-function move(x,z){send({t:'move',x,z})}
+function move(x,z){
+send({t:'move',x,z});
+}
 
-document.querySelectorAll('[data-dir]').forEach(b=>{
-b.onpointerdown=e=>{
-b.setPointerCapture(e.pointerId);
-const [x,z]=b.dataset.dir.split(',').map(Number);
-move(x,z);
+const joy=$('joy');
+let pointer=null;
+
+function joystick(e){
+const r=joy.getBoundingClientRect();
+let x=e.clientX-r.left-r.width/2;
+let z=e.clientY-r.top-r.height/2;
+const n=Math.max(1,Math.hypot(x,z)/40);
+x/=n;z/=n;
+$('stick').style.transform=
+`translate(${x}px,${z}px)`;
+move(x/40,z/40);
+}
+
+joy.onpointerdown=e=>{
+if(pointer!==null)return;
+pointer=e.pointerId;
+joy.setPointerCapture(pointer);
+joystick(e);
 };
-b.onpointerup=b.onpointercancel=()=>move(0,0);
-});
+
+joy.onpointermove=e=>{
+if(e.pointerId===pointer)joystick(e);
+};
+
+function stop(){
+pointer=null;
+$('stick').style.transform='translate(0,0)';
+move(0,0);
+}
+
+joy.onpointerup=stop;
+joy.onpointercancel=stop;
+joy.onlostpointercapture=stop;
 
 $('select').onclick=()=>{
 const me=players.find(p=>p.id===myId);
 if(!me)return;
 const enemies=players.filter(
 p=>p.team!==me.team&&!p.dead);
+
 enemies.sort((a,b)=>
 Math.hypot(a.x-me.x,a.z-me.z)-
 Math.hypot(b.x-me.x,b.z-me.z));
+
 target=enemies[0]?.id||null;
 };
 
 $('attack').onclick=()=>{
 if(!target)$('select').click();
-if(target)send({t:'hit',id:target});
+if(target){
+send({t:'hit',id:target});
+swingUntil=performance.now()+350;
+}
 };
+
 $('pot').onclick=()=>send({t:'pot'});
 
+$('cameraBtn').onclick=()=>{
+camMode=(camMode+1)%2;
+};
+
+$('full').onclick=async()=>{
+try{
+if(!document.fullscreenElement){
+await document.documentElement.requestFullscreen();
+try{await screen.orientation.lock('landscape')}catch{}
+}else{
+await document.exitFullscreen();
+}
+}catch{}
+};
+
 const keys=new Set();
+
 function keyboardMove(){
-move(Number(keys.has('d')||keys.has('arrowright'))-
+move(
+Number(keys.has('d')||keys.has('arrowright'))-
 Number(keys.has('a')||keys.has('arrowleft')),
 Number(keys.has('s')||keys.has('arrowdown'))-
 Number(keys.has('w')||keys.has('arrowup')));
 }
+
 addEventListener('keydown',e=>{
 if($('login').style.display!=='none')return;
 keys.add(e.key.toLowerCase());
 keyboardMove();
 if(e.code==='Space')$('attack').click();
 });
+
 addEventListener('keyup',e=>{
 keys.delete(e.key.toLowerCase());
 keyboardMove();
 });
-addEventListener('blur',()=>{keys.clear();move(0,0)});
+
+addEventListener('blur',()=>{
+keys.clear();
+stop();
+});
+
+document.addEventListener('visibilitychange',()=>{
+if(document.hidden)stop();
+});
+
+const ctx=$('map').getContext('2d');
+
+function minimap(){
+ctx.clearRect(0,0,104,104);
+ctx.fillStyle='#3e5130';
+ctx.fillRect(0,0,104,104);
+ctx.fillStyle='#99917d';
+ctx.fillRect(0,47,104,10);
+
+for(const p of players){
+if(p.dead)continue;
+ctx.fillStyle=p.id===myId?'#ffffff':
+p.team==='Human'?'#52aaff':'#ff5555';
+
+ctx.beginPath();
+ctx.arc(52+p.x*1.2,52+p.z*1.2,
+p.id===myId?4:3,0,Math.PI*2);
+ctx.fill();
+}
+}
 
 addEventListener('resize',()=>{
 camera.aspect=innerWidth/innerHeight;
@@ -274,17 +471,73 @@ camera.updateProjectionMatrix();
 renderer.setSize(innerWidth,innerHeight);
 });
 
-camera.position.set(0,18,25);
+camera.position.set(0,8,12);
+const clock=new THREE.Clock();
+const camTarget=new THREE.Vector3();
+const lookTarget=new THREE.Vector3();
+let started=false;
+
 function animate(){
 requestAnimationFrame(animate);
-const me=players.find(p=>p.id===myId);
+
+const dt=Math.min(clock.getDelta(),0.1);
+const alpha=1-Math.exp(-15*dt);
+const time=performance.now();
+
+for(const p of players){
+const g=models.get(p.id);
+if(!g)continue;
+
+g.position.x+=(g.userData.tx-g.position.x)*alpha;
+g.position.z+=(g.userData.tz-g.position.z)*alpha;
+
+const walking=!p.dead&&(Math.abs(p.dx)+Math.abs(p.dz)>0.05);
+
+if(walking){
+const angle=Math.atan2(p.dx,p.dz);
+const diff=angle-g.rotation.y;
+g.rotation.y+=Math.atan2(
+Math.sin(diff),Math.cos(diff))*alpha;
+}
+
+const step=walking?Math.sin(time*0.012)*0.55:0;
+
+g.userData.legs[0].rotation.x=step;
+g.userData.legs[1].rotation.x=-step;
+g.userData.arms[0].rotation.x=-step*0.6;
+g.userData.arms[1].rotation.x=step*0.6;
+
+if(p.id===myId&&time<swingUntil){
+g.userData.arms[1].rotation.x=
+-2*Math.sin((swingUntil-time)/350*Math.PI);
+}
+}
+
+const me=models.get(myId);
+
 if(me){
-camera.position.lerp(
-new THREE.Vector3(me.x,13,me.z+17),0.12);
-camera.lookAt(me.x,1,me.z);
-}else camera.lookAt(0,0,0);
+camTarget.set(me.position.x,
+camMode?11:5.5,
+me.position.z+(camMode?15:8));
+
+if(!started){
+camera.position.copy(camTarget);
+started=true;
+}
+
+camera.position.lerp(camTarget,
+1-Math.exp(-9*dt));
+
+lookTarget.set(me.position.x,1.4,me.position.z);
+camera.lookAt(lookTarget);
+}else{
+camera.lookAt(0,0,0);
+}
+
+minimap();
 renderer.render(scene,camera);
 }
+
 animate();
 </script>
 </body>
