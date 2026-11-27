@@ -3,3 +3,5 @@ Classic PvP Alpha. Extract ZIP, upload package.json, server.js and public/index.
 Extended edition: loot equipment, equip, fixed-price player market, same-faction open clans. All social actions except viewing require safe zone. SAVE_FILE must point to a mounted persistent disk (e.g. /var/data/accounts.json) for persistence across Render redeploys. No professional external assets included. Syntax checked only; live tests required.
 
 Original procedural low-poly character meshes embedded in index.html; no external assets required. Models are not commercial-quality rigged assets.
+
+2.0: Stat, skill, chat, ranking, unequip, 10 additional monsters. SAVE_FILE must point to persistent disk for durable saves.
