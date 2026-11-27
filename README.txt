@@ -5,3 +5,4 @@ Extended edition: loot equipment, equip, fixed-price player market, same-faction
 Original procedural low-poly character meshes embedded in index.html; no external assets required. Models are not commercial-quality rigged assets.
 
 2.0: Stat, skill, chat, ranking, unequip, 10 additional monsters. SAVE_FILE must point to persistent disk for durable saves.
+Dominion 3.0: tabbed UI, 40 visual inventory cells (stacked items), extra loot, decorative stream and bridges. Upload server.js and public/index.html. Existing models retained.
