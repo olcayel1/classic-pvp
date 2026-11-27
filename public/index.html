@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Classic PvP v0.4</title>
+<title>Classic PvP v0.5</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;overflow:hidden;background:#111;color:white;font-family:Arial;touch-action:none}
@@ -13,12 +13,18 @@ canvas{display:block}
 input,select,button{background:#29261f;color:#eee;border:1px solid #a58b50;border-radius:6px;padding:12px;font-size:16px}
 .panel input,.panel select,.panel button{width:100%;margin:5px 0}
 h1{color:#e5c989}
-#hud{position:fixed;top:10px;left:10px;background:#151510dd;border:1px solid #96804b;padding:10px;border-radius:6px;width:165px;pointer-events:none}
-.bar{height:13px;background:#222;margin:5px 0;border:1px solid #777}
-#hp{height:100%;background:linear-gradient(#ee5544,#941111)}
-#mp{height:100%;background:linear-gradient(#4a9cff,#173c99)}
+#hud{position:fixed;top:8px;left:8px;background:#151510dd;border:1px solid #96804b;padding:9px;border-radius:6px;width:165px;pointer-events:none;font-size:12px}
+#info{font-size:16px;color:#ffe2a0;margin-bottom:6px}
+.bar{height:15px;background:#222;margin:4px 0;border:1px solid #777;position:relative;overflow:hidden}
+.bar span{position:absolute;inset:0;text-align:center;font-size:10px;line-height:13px;text-shadow:1px 1px 2px black}
+.fill{height:100%;width:100%;transition:width .15s}
+#hp{background:linear-gradient(#ee5544,#941111)}
+#mp{background:linear-gradient(#4a9cff,#173c99)}
+#exp{background:linear-gradient(#f5cf51,#a27b17);width:0}
+#rank{color:#e7c77c;margin:4px 0}
+#target{color:#ffb2a2;margin-top:5px}
 #map{position:fixed;right:10px;top:10px;border:2px solid #a58b50;border-radius:50%;background:#222;pointer-events:none}
-#online{position:fixed;right:10px;top:120px;background:#111b;padding:5px;pointer-events:none}
+#online{position:fixed;right:10px;top:120px;background:#111b;padding:5px;font-size:12px;pointer-events:none}
 #joy{position:fixed;left:20px;bottom:35px;width:120px;height:120px;background:#1117;border:2px solid #b6a477;border-radius:50%;touch-action:none}
 #stick{position:absolute;left:36px;top:36px;width:44px;height:44px;background:#b9a77caa;border:2px solid #ddd;border-radius:50%;pointer-events:none}
 #skills{position:fixed;bottom:20px;right:12px;display:grid;grid-template-columns:repeat(2,65px);gap:6px}
@@ -28,6 +34,8 @@ h1{color:#e5c989}
 #version{position:fixed;bottom:3px;left:50%;transform:translateX(-50%);font-size:10px;color:#ddd;pointer-events:none}
 #zoom{position:fixed;right:12px;top:195px;display:flex;gap:5px}
 #zoom button{padding:8px 13px}
+#zone{position:fixed;top:8px;left:50%;transform:translateX(-50%);font-size:11px;padding:5px 10px;background:#182619cc;border-radius:5px;pointer-events:none;color:#9de6a0}
+#notice{position:fixed;top:40%;left:50%;transform:translateX(-50%);font-size:19px;font-weight:bold;color:#ffe28a;text-shadow:2px 2px 3px black;pointer-events:none;text-align:center}
 </style>
 </head>
 <body>
@@ -35,7 +43,8 @@ h1{color:#e5c989}
 <div id="login">
 <div class="panel">
 <h1>CLASSIC PvP</h1>
-<p>65 Level PK Arena</p>
+<p>Human vs Orc</p>
+<p>Level 1 - Unlimited Progression</p>
 <input id="nick" placeholder="Karakter adi" maxlength="18">
 <select id="team">
 <option>Human</option>
@@ -43,9 +52,9 @@ h1{color:#e5c989}
 </select>
 <select id="cls">
 <option>Warrior</option>
-<option>Rogue</option>
+<option>Archer</option>
 <option>Mage</option>
-<option>Priest</option>
+<option>Assassin</option>
 </select>
 <button id="join">OYUNA GIR</button>
 <p id="message">Baglaniliyor...</p>
@@ -53,15 +62,33 @@ h1{color:#e5c989}
 </div>
 
 <div id="hud">
-<div id="info">Lv.65</div>
-<div class="bar"><div id="hp"></div></div>
-<div class="bar"><div id="mp"></div></div>
+<div id="info">Lv.1</div>
+<div class="bar">
+<div id="hp" class="fill"></div>
+<span id="hpText">HP</span>
+</div>
+<div class="bar">
+<div id="mp" class="fill"></div>
+<span id="mpText">MP</span>
+</div>
+<div class="bar">
+<div id="exp" class="fill"></div>
+<span id="expText">EXP: %0</span>
+</div>
+<div id="rank">Recruit</div>
 <div id="np">NP: 0</div>
+<div id="spnp">Harcanabilir NP: 0</div>
+<div id="kd">Kill: 0 / Death: 0</div>
+<div id="gold">Gold: 0</div>
 <div id="target">Hedef: Yok</div>
 </div>
 
+<div id="zone">Guvenli Bolge</div>
+<div id="notice"></div>
+
 <canvas id="map" width="104" height="104"></canvas>
 <div id="online">Online: 0</div>
+
 <button id="full">TAM EKRAN</button>
 
 <div id="zoom">
@@ -78,7 +105,7 @@ h1{color:#e5c989}
 <button id="cameraBtn">↻<small>KAMERA</small></button>
 </div>
 
-<div id="version">Classic PvP v0.4</div>
+<div id="version">Classic PvP v0.5</div>
 
 <script type="module">
 import * as THREE from '/three/three.module.js';
@@ -93,61 +120,77 @@ scene.fog=new THREE.Fog(0x9bb4c7,40,100);
 const camera=new THREE.PerspectiveCamera(
 65,innerWidth/innerHeight,0.1,150);
 
-const renderer=new THREE.WebGLRenderer({antialias:false});
+const renderer=new THREE.WebGLRenderer({
+antialias:false
+});
+
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.setSize(innerWidth,innerHeight);
+
 document.body.prepend(renderer.domElement);
 
 const canvas=renderer.domElement;
 canvas.style.touchAction='none';
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x596044,2));
+scene.add(new THREE.HemisphereLight(
+0xffffff,0x596044,2));
 
 const sun=new THREE.DirectionalLight(0xffecd2,2);
 sun.position.set(20,35,15);
 scene.add(sun);
 
 function mesh(geo,color,x,y,z,parent=scene){
-const m=new THREE.Mesh(geo,
+const m=new THREE.Mesh(
+geo,
 new THREE.MeshStandardMaterial({
 color,roughness:0.65,metalness:0.1
 }));
+
 m.position.set(x,y,z);
 parent.add(m);
 return m;
 }
 
 function box(w,h,d,c,x,y,z,parent=scene){
-return mesh(new THREE.BoxGeometry(w,h,d),c,x,y,z,parent);
+return mesh(new THREE.BoxGeometry(w,h,d),
+c,x,y,z,parent);
 }
 
 function cylinder(a,b,h,c,x,y,z,parent=scene){
-return mesh(new THREE.CylinderGeometry(a,b,h,8),c,x,y,z,parent);
+return mesh(new THREE.CylinderGeometry(a,b,h,8),
+c,x,y,z,parent);
 }
 
 function sphere(r,c,x,y,z,parent=scene,sx=1,sy=1,sz=1){
-const m=mesh(new THREE.SphereGeometry(r,10,8),c,x,y,z,parent);
+const m=mesh(new THREE.SphereGeometry(r,10,8),
+c,x,y,z,parent);
 m.scale.set(sx,sy,sz);
 return m;
 }
+
+// HARITA
 
 box(80,0.4,80,0x687b47,0,-0.2,0);
 
 for(let i=0;i<150;i++){
 let x=Math.sin(i*17.3)*38;
 let z=Math.cos(i*9.7)*38;
+
 box(2.5,0.015,2.5,
 i%2?0x72834e:0x627546,x,0.015,z);
 }
 
 for(let x=-38;x<=38;x+=2){
 for(let z=-2;z<=2;z+=2){
+
 box(1.92,0.08,1.92,
-(x+z)%4?0x9d998a:0x89877d,x,0.04,z);
+(x+z)%4?0x9d998a:0x89877d,
+x,0.04,z);
 }
 }
 
 for(let i=-38;i<=38;i+=4){
+
 box(4,3,1,0x77776c,i,1.5,-40);
 box(4,3,1,0x77776c,i,1.5,40);
 box(1,3,4,0x77776c,-40,1.5,i);
@@ -155,15 +198,24 @@ box(1,3,4,0x77776c,40,1.5,i);
 }
 
 function castle(x,color){
+
 for(let z of [-6,6]){
+
 cylinder(2.1,2.3,7,0x85847c,x,3.5,z);
+
 for(let i=0;i<8;i++){
+
 let a=i*Math.PI/4;
+
 box(0.7,1,0.7,0x99978a,
-x+Math.cos(a)*1.8,7.3,z+Math.sin(a)*1.8);
+x+Math.cos(a)*1.8,
+7.3,
+z+Math.sin(a)*1.8);
 }
+
 box(0.15,2.6,1.8,color,x,6,z);
 }
+
 box(1.2,5,8,0x85847c,x,2.5,0);
 }
 
@@ -171,64 +223,159 @@ castle(-35,0x2455aa);
 castle(35,0xaa2929);
 
 for(let i=0;i<28;i++){
+
 let x=Math.sin(i*7.3)*34;
 let z=Math.cos(i*4.7)*32;
+
 if(Math.abs(z)<8)continue;
+
 cylinder(0.22,0.45,3,0x64432b,x,1.5,z);
+
 mesh(new THREE.ConeGeometry(2,4,7),
 0x31572c,x,4,z);
+
 mesh(new THREE.ConeGeometry(1.5,3,7),
 0x416b35,x,5.5,z);
 }
 
+// GUVENLI BOLGE SINIRLARI
+
+for(const x of [-18,18]){
+
+const line=new THREE.Mesh(
+new THREE.PlaneGeometry(0.12,76),
+new THREE.MeshBasicMaterial({
+color:0xe1c46a,
+transparent:true,
+opacity:0.65
+}));
+
+line.rotation.x=-Math.PI/2;
+line.position.set(x,0.09,0);
+scene.add(line);
+}
+
+// OYUNCULAR
+
 const models=new Map();
-let players=[],myId=null,target=null;
+
+let players=[];
+let myId=null;
+let target=null;
 let swingUntil=0;
+let lastLevel=null;
+let lastNP=null;
+let noticeUntil=0;
 
 let yaw=0,pitch=0.48,distance=9;
+
 let smoothYaw=yaw;
 let smoothPitch=pitch;
 let smoothDistance=distance;
+
 let inputX=0,inputZ=0;
 
 const ws=new WebSocket(
-(location.protocol==='https:'?'wss://':'ws://')+location.host);
+(location.protocol==='https:'?'wss://':'ws://')
++location.host
+);
 
 function send(data){
-if(ws.readyState===1)ws.send(JSON.stringify(data));
+if(ws.readyState===1)
+ws.send(JSON.stringify(data));
 }
 
-ws.onopen=()=>$('message').textContent='Sunucu hazir';
+ws.onopen=()=>{
+$('message').textContent='Sunucu hazir';
+};
 
 ws.onclose=()=>{
-$('message').textContent='Baglanti kesildi. Sayfayi yenile.';
+$('message').textContent=
+'Baglanti kesildi. Sayfayi yenile.';
 $('login').style.display='flex';
 };
 
-ws.onerror=()=>$('message').textContent='Baglanti hatasi';
-
-$('join').onclick=()=>{
-send({t:'join',name:$('nick').value,
-team:$('team').value,c:$('cls').value});
+ws.onerror=()=>{
+$('message').textContent='Baglanti hatasi';
 };
 
+$('join').onclick=()=>{
+
+if(ws.readyState!==1)return;
+
+send({
+t:'join',
+name:$('nick').value,
+team:$('team').value,
+c:$('cls').value
+});
+};
+
+function notice(text){
+$('notice').textContent=text;
+noticeUntil=performance.now()+2200;
+}
+
+// SILAHLAR
+
 function sword(parent,length=1.4){
+
 box(0.10,0.3,0.10,0x38291e,0,0,0,parent);
-box(0.43,0.09,0.14,0xc9a24e,0,0.19,0,parent);
-box(0.18,length,0.065,0xdce5ed,0,length/2+0.23,0,parent);
-box(0.045,length,0.08,0x899aa9,0,length/2+0.23,0,parent);
+
+box(0.43,0.09,0.14,0xc9a24e,
+0,0.19,0,parent);
+
+box(0.18,length,0.065,0xdce5ed,
+0,length/2+0.23,0,parent);
+
+box(0.045,length,0.08,0x899aa9,
+0,length/2+0.23,0,parent);
+
 mesh(new THREE.ConeGeometry(0.105,0.23,4),
 0xdce5ed,0,length+0.34,0,parent);
+
 sphere(0.09,0xc9a24e,0,-0.19,0,parent);
 }
 
+function bow(parent){
+
+const points=[];
+
+for(let i=0;i<=20;i++){
+
+const a=-Math.PI/2+i*Math.PI/20;
+
+points.push(new THREE.Vector3(
+Math.cos(a)*0.48,
+Math.sin(a)*0.85,
+0
+));
+}
+
+const curve=new THREE.CatmullRomCurve3(points);
+
+mesh(
+new THREE.TubeGeometry(curve,20,0.055,5,false),
+0x9a6532,0,0,0,parent
+);
+
+cylinder(0.012,0.012,1.7,
+0xeeeecc,0,0,0,parent);
+
+box(0.12,0.25,0.12,
+0x473021,0.48,0,0,parent);
+}
+
+// KARAKTER MODELLERI
+
 function character(p){
+
 const g=new THREE.Group();
 
 const orc=p.team==='Orc';
-const female=p.c==='Priest';
 const warrior=p.c==='Warrior';
-const rogue=p.c==='Rogue';
+const archer=p.c==='Archer';
+const assassin=p.c==='Assassin';
 const mage=p.c==='Mage';
 
 const skin=orc?0x76934d:0xe4b18e;
@@ -238,87 +385,108 @@ const gold=0xc8a454;
 const leather=0x49382b;
 const hair=orc?0x25201b:0x674326;
 
-const armor=rogue?leather:
+const armor=assassin?0x343434:
+archer?0x59643b:
 mage?teamColor:steel;
-
-const width=female?0.83:orc?1.15:1;
 
 const body=new THREE.Group();
 g.add(body);
-body.scale.x=width;
 
-cylinder(0.37,0.25,0.65,armor,0,1.43,0,body);
+if(orc)body.scale.set(1.15,1.06,1.1);
 
-sphere(0.38,armor,0,1.6,0,body,1,0.65,0.68);
+cylinder(0.37,0.25,0.65,
+armor,0,1.43,0,body);
+
+sphere(0.38,armor,0,1.6,0,
+body,1,0.65,0.68);
 
 cylinder(0.25,0.32,0.32,
 armor,0,1.04,0,body);
 
-box(0.62,0.13,0.45,leather,0,1.06,0,body);
-box(0.18,0.16,0.07,gold,0,1.06,0.25,body);
+box(0.62,0.13,0.45,
+leather,0,1.06,0,body);
 
-if(warrior||female){
-box(0.09,0.48,0.06,gold,0,1.5,0.28,body);
-box(0.42,0.08,0.07,gold,0,1.68,0.29,body);
+box(0.18,0.16,0.07,
+gold,0,1.06,0.25,body);
+
+if(warrior){
+
+box(0.09,0.48,0.06,
+gold,0,1.5,0.28,body);
+
+box(0.42,0.08,0.07,
+gold,0,1.68,0.29,body);
 }
 
-cylinder(0.12,0.14,0.22,skin,0,1.91,0,body);
+cylinder(0.12,0.14,0.22,
+skin,0,1.91,0,body);
 
 const head=new THREE.Group();
 head.position.y=2.12;
 body.add(head);
 
-sphere(0.26,skin,0,0,0,head,
-female?0.87:1,1.12,0.9);
+sphere(0.26,skin,0,0,0,
+head,1,1.12,0.9);
 
-sphere(0.065,skin,0,-0.035,0.235,head,
-0.65,1,0.85);
+sphere(0.065,skin,0,-0.035,0.235,
+head,0.65,1,0.85);
 
 for(let s of [-1,1]){
-sphere(0.047,0xf1eee6,s*0.095,0.045,0.214,head,1,0.5,0.35);
-sphere(0.023,0x242b2e,s*0.095,0.045,0.23,head,0.7,1,0.4);
-box(0.105,0.025,0.025,hair,s*0.095,0.10,0.213,head);
-sphere(0.065,skin,s*0.24,0,0,head,0.5,1.1,0.65);
+
+sphere(0.047,0xf1eee6,
+s*0.095,0.045,0.214,
+head,1,0.5,0.35);
+
+sphere(0.023,0x242b2e,
+s*0.095,0.045,0.23,
+head,0.7,1,0.4);
+
+box(0.105,0.025,0.025,
+hair,s*0.095,0.10,0.213,head);
+
+sphere(0.065,skin,s*0.24,0,0,
+head,0.5,1.1,0.65);
 }
 
 box(0.105,0.025,0.025,
-female?0x9c514d:0x805444,
-0,-0.115,0.205,head);
+0x805444,0,-0.115,0.205,head);
 
-if(female){
-sphere(0.28,hair,0,0.12,-0.05,head,1,0.7,1);
-sphere(0.23,hair,0,-0.23,-0.17,head,0.85,2.0,0.7);
+if(warrior){
 
-for(let s of [-1,1]){
-sphere(0.085,hair,s*0.22,-0.13,-0.035,head,0.8,3,0.8);
-sphere(0.035,gold,s*0.24,-0.075,0.02,head);
-}
+sphere(0.29,steel,0,0.08,-0.035,
+head,1.05,0.9,1);
 
-box(0.40,0.045,0.04,gold,0,0.14,0.22,head);
-sphere(0.055,0x4ebbe8,0,0.14,0.25,head);
-
-}else if(warrior){
-sphere(0.29,steel,0,0.08,-0.035,head,1.05,0.9,1);
-box(0.06,0.24,0.065,gold,0,0.10,0.27,head);
+box(0.06,0.24,0.065,
+gold,0,0.10,0.27,head);
 
 for(let s of [-1,1]){
-box(0.08,0.27,0.32,steel,s*0.24,-0.04,0,head);
+
+box(0.08,0.27,0.32,
+steel,s*0.24,-0.04,0,head);
 }
 
-}else if(rogue||mage){
-sphere(0.31,teamColor,0,0.09,-0.09,head,1,1.05,0.85);
+}else{
+
+sphere(0.31,armor,0,0.09,-0.09,
+head,1,1.05,0.85);
 
 for(let s of [-1,1]){
-sphere(0.12,teamColor,s*0.23,-0.02,0,head,0.6,1.7,1);
+
+sphere(0.12,armor,s*0.23,-0.02,0,
+head,0.6,1.7,1);
 }
 
-if(rogue){
-box(0.38,0.15,0.08,leather,0,-0.13,0.19,head);
+if(assassin){
+
+box(0.38,0.15,0.08,
+0x242424,0,-0.13,0.19,head);
 }
 }
 
-if(orc&&!female){
+if(orc&&!assassin){
+
 for(let s of [-1,1]){
+
 mesh(new THREE.ConeGeometry(0.035,0.12,6),
 0xe4ddbd,s*0.11,-0.09,0.22,head);
 }
@@ -327,129 +495,160 @@ mesh(new THREE.ConeGeometry(0.035,0.12,6),
 const legs=[];
 
 for(let s of [-1,1]){
+
 const leg=new THREE.Group();
 leg.position.set(s*0.19,0.94,0);
 body.add(leg);
 
 cylinder(0.14,0.12,0.38,
-rogue?leather:armor,0,-0.19,0,leg);
+armor,0,-0.19,0,leg);
 
-sphere(0.15,steel,0,-0.4,0.035,leg,1,0.8,1);
+sphere(0.15,warrior?steel:leather,
+0,-0.4,0.035,leg,1,0.8,1);
 
 cylinder(0.12,0.10,0.36,
-rogue?leather:steel,0,-0.61,0,leg);
+warrior?steel:leather,
+0,-0.61,0,leg);
 
 box(0.27,0.16,0.43,
-rogue?leather:steel,0,-0.82,0.08,leg);
+warrior?steel:leather,
+0,-0.82,0.08,leg);
 
 legs.push(leg);
 }
 
 if(mage){
-cylinder(0.26,0.43,0.87,teamColor,0,0.57,0,body);
-box(0.07,0.82,0.035,gold,0,0.57,0.35,body);
-}
 
-if(female){
-for(let s of [-1,1]){
-const skirt=box(0.21,0.45,0.35,teamColor,s*0.23,0.85,0,body);
-skirt.rotation.z=s*0.15;
-box(0.05,0.44,0.04,gold,s*0.23,0.85,0.19,body);
-}
+cylinder(0.26,0.43,0.87,
+teamColor,0,0.57,0,body);
+
+box(0.07,0.82,0.035,
+gold,0,0.57,0.35,body);
 }
 
 const arms=[];
 
 for(let s of [-1,1]){
+
 const arm=new THREE.Group();
-arm.position.set(s*(warrior?0.51:0.43),1.71,0);
+
+arm.position.set(
+s*(warrior?0.51:0.43),1.71,0
+);
+
 body.add(arm);
 
-sphere(warrior?0.29:0.21,armor,0,0,0,arm,1.1,0.8,1);
+sphere(warrior?0.29:0.21,
+armor,0,0,0,arm,1.1,0.8,1);
 
-if(warrior||female){
-sphere(0.19,gold,0,0.035,0,arm,1.35,0.45,1.2);
+if(warrior){
+
+sphere(0.19,gold,0,0.035,0,
+arm,1.35,0.45,1.2);
 }
 
 cylinder(0.115,0.10,0.35,
-female?skin:armor,0,-0.25,0,arm);
+armor,0,-0.25,0,arm);
 
 sphere(0.115,armor,0,-0.43,0,arm);
 
 cylinder(0.13,0.095,0.28,
-rogue?leather:steel,0,-0.53,0,arm);
+warrior?steel:leather,
+0,-0.53,0,arm);
 
-sphere(0.10,skin,0,-0.72,0,arm,0.8,1,0.9);
+sphere(0.10,skin,0,-0.72,0,
+arm,0.8,1,0.9);
+
 arms.push(arm);
 }
 
 const weapon=new THREE.Group();
+
 weapon.position.set(0,-0.72,0.13);
 weapon.rotation.x=0.2;
+
 arms[1].add(weapon);
 
 if(warrior){
+
 sword(weapon,1.65);
 
-}else if(rogue){
+}else if(assassin){
+
 sword(weapon,0.55);
+
 const second=new THREE.Group();
 second.position.set(0,-0.72,0.13);
 arms[0].add(second);
+
 sword(second,0.55);
 
-}else if(mage){
-cylinder(0.045,0.065,2.15,0x694626,0,0.5,0,weapon);
+}else if(archer){
 
-const crystal=mesh(new THREE.OctahedronGeometry(0.21),
-0x42baff,0,1.75,0,weapon);
+bow(weapon);
+
+const quiver=cylinder(
+0.13,0.11,0.85,
+leather,0,1.45,-0.34,body
+);
+
+quiver.rotation.z=0.3;
+
+for(let i=0;i<5;i++){
+
+cylinder(0.018,0.018,0.7,
+0xb59c6e,
+(i-2)*0.055,1.95,-0.35,body);
+
+box(0.06,0.15,0.04,
+0xd9d9d0,
+(i-2)*0.055,2.25,-0.35,body);
+}
+
+}else if(mage){
+
+cylinder(0.045,0.065,2.15,
+0x694626,0,0.5,0,weapon);
+
+const crystal=mesh(
+new THREE.OctahedronGeometry(0.21),
+0x42baff,0,1.75,0,weapon
+);
 
 crystal.material.emissive.setHex(0x1677dd);
 crystal.material.emissiveIntensity=0.8;
 
-const ring=mesh(new THREE.TorusGeometry(0.27,0.035,5,12),
+mesh(new THREE.TorusGeometry(0.27,0.035,5,12),
 gold,0,1.75,0,weapon);
-
-}else if(female){
-cylinder(0.055,0.065,0.95,0x62462a,0,0.35,0,weapon);
-sphere(0.22,steel,0,0.91,0,weapon,1,1.2,1);
-
-for(let i=0;i<6;i++){
-const a=i*Math.PI/3;
-sphere(0.09,gold,Math.cos(a)*0.19,0.91,Math.sin(a)*0.19,weapon);
-}
-
-const shield=new THREE.Group();
-shield.position.set(0,-0.4,0.27);
-arms[0].add(shield);
-
-sphere(0.43,gold,0,0,0,shield,0.85,1.2,0.15);
-sphere(0.37,teamColor,0,0,0.045,shield,0.85,1.2,0.15);
-box(0.07,0.53,0.045,gold,0,0,0.12,shield);
-box(0.37,0.07,0.045,gold,0,0.05,0.12,shield);
-sphere(0.08,steel,0,0,0.15,shield);
 }
 
 const cape=new THREE.Group();
 cape.position.set(0,1.75,-0.25);
 body.add(cape);
 
-if(!rogue){
-const capeMesh=box(
-female?0.57:0.74,
-mage?1.25:0.95,
-0.045,teamColor,0,-0.48,-0.09,cape);
+if(warrior||mage){
 
-capeMesh.rotation.x=0.12;
+const cm=box(
+0.74,mage?1.25:0.95,
+0.045,teamColor,
+0,-0.48,-0.09,cape
+);
 
-box(0.045,0.92,0.025,gold,-0.26,-0.48,-0.13,cape);
-box(0.045,0.92,0.025,gold,0.26,-0.48,-0.13,cape);
+cm.rotation.x=0.12;
+
+box(0.045,0.92,0.025,
+gold,-0.26,-0.48,-0.13,cape);
+
+box(0.045,0.92,0.025,
+gold,0.26,-0.48,-0.13,cape);
 }
 
 const shadow=new THREE.Mesh(
 new THREE.CircleGeometry(0.65,16),
 new THREE.MeshBasicMaterial({
-color:0x192219,transparent:true,opacity:0.35,
+color:0x192219,
+transparent:true,
+opacity:0.35,
 depthWrite:false
 }));
 
@@ -457,73 +656,142 @@ shadow.rotation.x=-Math.PI/2;
 shadow.position.y=0.025;
 g.add(shadow);
 
-const label=document.createElement('canvas');
-label.width=256;
-label.height=64;
-const ctx=label.getContext('2d');
-ctx.font='bold 26px Arial';
-ctx.textAlign='center';
-ctx.strokeStyle='black';
-ctx.lineWidth=5;
-ctx.strokeText(p.name,128,35);
-ctx.fillStyle=orc?'#ffb0a0':'#b0dcff';
-ctx.fillText(p.name,128,35);
-
-const sprite=new THREE.Sprite(
-new THREE.SpriteMaterial({
-map:new THREE.CanvasTexture(label)
+const selection=new THREE.Mesh(
+new THREE.RingGeometry(0.65,0.78,24),
+new THREE.MeshBasicMaterial({
+color:0xff3838,
+side:THREE.DoubleSide
 }));
 
-sprite.scale.set(3.6,0.9,1);
-sprite.position.y=2.9;
+selection.rotation.x=-Math.PI/2;
+selection.position.y=0.06;
+selection.visible=false;
+g.add(selection);
+
+const label=document.createElement('canvas');
+label.width=256;
+label.height=96;
+
+const ctx=label.getContext('2d');
+
+const texture=new THREE.CanvasTexture(label);
+
+const sprite=new THREE.Sprite(
+new THREE.SpriteMaterial({map:texture})
+);
+
+sprite.scale.set(3.4,1.25,1);
+sprite.position.y=3.05;
 g.add(sprite);
 
-if(female)body.scale.set(0.83,0.96,0.85);
-else if(orc)body.scale.set(1.15,1.06,1.1);
-
 g.position.set(p.x,0,p.z);
-g.userData={body,legs,arms,cape,tx:p.x,tz:p.z};
+
+g.userData={
+body,legs,arms,cape,selection,
+label,ctx,texture,
+labelKey:'',
+tx:p.x,tz:p.z
+};
+
 scene.add(g);
+
 return g;
 }
 
+function updateLabel(g,p){
+
+const key=p.name+p.level+p.rank;
+
+if(g.userData.labelKey===key)return;
+
+g.userData.labelKey=key;
+
+const ctx=g.userData.ctx;
+
+ctx.clearRect(0,0,256,96);
+ctx.textAlign='center';
+
+ctx.font='bold 18px Arial';
+ctx.fillStyle='#f0d58d';
+ctx.strokeStyle='black';
+ctx.lineWidth=4;
+
+ctx.strokeText(p.rank||'Recruit',128,22);
+ctx.fillText(p.rank||'Recruit',128,22);
+
+ctx.font='bold 25px Arial';
+
+const text='Lv.'+(p.level||1)+' '+p.name;
+
+ctx.fillStyle=p.team==='Orc'?
+'#ffb0a0':'#b0dcff';
+
+ctx.strokeText(text,128,53,250);
+ctx.fillText(text,128,53,250);
+
+g.userData.texture.needsUpdate=true;
+}
+
+// SUNUCU VERILERI
+
 ws.onmessage=e=>{
+
 const m=JSON.parse(e.data);
 
 if(m.t==='id'){
+
 myId=m.id;
 $('login').style.display='none';
 }
 
 if(m.t!=='state')return;
+
 players=m.players;
 
 $('online').textContent='Online: '+players.length;
 
 for(const p of players){
+
 if(!models.has(p.id))
 models.set(p.id,character(p));
 
 const g=models.get(p.id);
 
-if(Math.hypot(g.position.x-p.x,g.position.z-p.z)>8)
+if(Math.hypot(
+g.position.x-p.x,
+g.position.z-p.z
+)>8){
+
 g.position.set(p.x,0,p.z);
+}
 
 g.userData.tx=p.x;
 g.userData.tz=p.z;
 g.visible=!p.dead;
+
+updateLabel(g,p);
+
+g.userData.selection.visible=
+p.id===target&&!p.dead;
 }
 
 for(const [id,g] of models){
+
 if(!players.some(p=>p.id===id)){
+
 scene.remove(g);
+
 g.traverse(o=>{
+
 if(o.geometry)o.geometry.dispose();
+
 if(o.material){
+
 if(o.material.map)o.material.map.dispose();
 o.material.dispose();
 }
 });
+
 models.delete(id);
 }
 }
@@ -531,44 +799,122 @@ models.delete(id);
 const me=players.find(p=>p.id===myId);
 
 if(me){
+
+const level=me.level||1;
+
 $('info').textContent=me.dead?
-'Yeniden doguyorsun...':'Lv.65 '+me.c;
-$('hp').style.width=(me.hp/me.max*100)+'%';
-$('mp').style.width=(me.mp/me.mmax*100)+'%';
-$('np').textContent='NP: '+me.np;
+'Yeniden doguyorsun...':
+'Lv.'+level+' '+me.c;
+
+$('hp').style.width=
+clamp(me.hp/me.max*100,0,100)+'%';
+
+$('mp').style.width=
+clamp(me.mp/me.mmax*100,0,100)+'%';
+
+const ep=clamp(
+(me.exp||0)/(me.nextExp||500)*100,
+0,100
+);
+
+$('exp').style.width=ep+'%';
+
+$('hpText').textContent=
+'HP '+Math.floor(me.hp)+'/'+me.max;
+
+$('mpText').textContent=
+'MP '+Math.floor(me.mp)+'/'+me.mmax;
+
+$('expText').textContent=
+'EXP %'+ep.toFixed(2);
+
+$('rank').textContent=me.rank||'Recruit';
+
+$('np').textContent='NP: '+(me.np||0);
+
+$('spnp').textContent=
+'Harcanabilir NP: '+(me.spendableNP||0);
+
+$('kd').textContent=
+'Kill: '+(me.kills||0)+
+' / Death: '+(me.deaths||0);
+
+$('gold').textContent=
+'Gold: '+(me.gold||0);
+
+const safe=me.team==='Human'?
+me.x< -18:me.x>18;
+
+$('zone').textContent=
+safe?'GUVENLI BOLGE':'SAVAS BOLGESI';
+
+$('zone').style.color=
+safe?'#9de6a0':'#ff8e7e';
+
+if(lastLevel!==null&&level>lastLevel){
+
+notice('LEVEL UP! Lv.'+level);
+
+}else if(lastNP!==null&&me.np>lastNP){
+
+notice('+'+(me.np-lastNP)+' NP');
 }
 
-const enemy=players.find(p=>p.id===target&&!p.dead);
+lastLevel=level;
+lastNP=me.np;
+}
+
+const enemy=players.find(
+p=>p.id===target&&!p.dead
+);
+
 if(!enemy)target=null;
 
 $('target').textContent=enemy?
-enemy.name+' HP: '+enemy.hp:'Hedef: Yok';
+'Lv.'+(enemy.level||1)+' '+enemy.name+
+' HP:'+Math.floor(enemy.hp):
+'Hedef: Yok';
 };
 
+// HAREKET
+
 function sendMovement(){
-const x=inputX*Math.cos(smoothYaw)+inputZ*Math.sin(smoothYaw);
-const z=-inputX*Math.sin(smoothYaw)+inputZ*Math.cos(smoothYaw);
+
+const x=inputX*Math.cos(smoothYaw)
++inputZ*Math.sin(smoothYaw);
+
+const z=-inputX*Math.sin(smoothYaw)
++inputZ*Math.cos(smoothYaw);
+
 send({t:'move',x,z});
 }
 
 function move(x,z){
+
 inputX=x;
 inputZ=z;
 sendMovement();
 }
 
 setInterval(()=>{
+
 if(myId)sendMovement();
+
 },50);
 
 const joy=$('joy');
+
 let pointer=null;
 
 function joystick(e){
+
 const r=joy.getBoundingClientRect();
+
 let x=e.clientX-r.left-r.width/2;
 let z=e.clientY-r.top-r.height/2;
+
 const n=Math.max(1,Math.hypot(x,z)/40);
+
 x/=n;
 z/=n;
 
@@ -579,23 +925,33 @@ move(x/40,z/40);
 }
 
 joy.onpointerdown=e=>{
+
 if(pointer!==null)return;
+
 pointer=e.pointerId;
 joy.setPointerCapture(pointer);
+
 joystick(e);
 };
 
 joy.onpointermove=e=>{
-if(e.pointerId===pointer)joystick(e);
+
+if(e.pointerId===pointer)
+joystick(e);
 };
 
 function stop(){
+
 pointer=null;
-$('stick').style.transform='translate(0,0)';
+
+$('stick').style.transform=
+'translate(0,0)';
+
 move(0,0);
 }
 
 function joyRelease(e){
+
 if(e.pointerId===pointer)stop();
 }
 
@@ -603,45 +959,74 @@ joy.onpointerup=joyRelease;
 joy.onpointercancel=joyRelease;
 joy.onlostpointercapture=joyRelease;
 
+// KAMERA
+
 const touches=new Map();
 
 function pinch(){
+
 const a=[...touches.values()];
+
 return a.length===2?
-Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y):0;
+Math.hypot(
+a[0].x-a[1].x,
+a[0].y-a[1].y
+):0;
 }
 
 canvas.addEventListener('pointerdown',e=>{
+
 if(!myId||touches.size>=2)return;
+
 canvas.setPointerCapture(e.pointerId);
+
 touches.set(e.pointerId,{
-x:e.clientX,y:e.clientY
+x:e.clientX,
+y:e.clientY
 });
 });
 
 canvas.addEventListener('pointermove',e=>{
+
 const old=touches.get(e.pointerId);
+
 if(!old)return;
 
 const before=pinch();
+
 const dx=e.clientX-old.x;
 const dy=e.clientY-old.y;
 
 touches.set(e.pointerId,{
-x:e.clientX,y:e.clientY
+x:e.clientX,
+y:e.clientY
 });
 
 if(touches.size===1){
+
 yaw-=dx*0.008;
-pitch=clamp(pitch+dy*0.006,0.08,1.35);
+
+pitch=clamp(
+pitch+dy*0.006,
+0.08,1.35
+);
+
 }else if(touches.size===2){
+
 const after=pinch();
-if(before>0&&after>0)
-distance=clamp(distance*before/after,3.5,22);
+
+if(before>0&&after>0){
+
+distance=clamp(
+distance*before/after,
+3.5,22
+);
+}
 }
 });
 
 function release(e){
+
 touches.delete(e.pointerId);
 }
 
@@ -650,218 +1035,100 @@ canvas.addEventListener('pointercancel',release);
 canvas.addEventListener('lostpointercapture',release);
 
 canvas.addEventListener('wheel',e=>{
+
 e.preventDefault();
-distance=clamp(distance+e.deltaY*0.015,3.5,22);
+
+distance=clamp(
+distance+e.deltaY*0.015,
+3.5,22
+);
+
 },{passive:false});
 
 $('plus').onclick=()=>{
+
 distance=clamp(distance-1.5,3.5,22);
 };
 
 $('minus').onclick=()=>{
+
 distance=clamp(distance+1.5,3.5,22);
 };
 
+// SAVAS
+
 $('select').onclick=()=>{
+
 const me=players.find(p=>p.id===myId);
+
 if(!me)return;
 
 const enemies=players.filter(
-p=>p.team!==me.team&&!p.dead);
+p=>p.team!==me.team&&!p.dead
+);
 
 enemies.sort((a,b)=>
 Math.hypot(a.x-me.x,a.z-me.z)-
-Math.hypot(b.x-me.x,b.z-me.z));
+Math.hypot(b.x-me.x,b.z-me.z)
+);
 
 target=enemies[0]?.id||null;
+
+if(!target)notice('Rakip bulunamadi');
 };
 
 $('attack').onclick=()=>{
+
+const me=players.find(p=>p.id===myId);
+
+if(!me||me.dead)return;
+
 if(!target)$('select').click();
-if(target){
-send({t:'hit',id:target});
-swingUntil=performance.now()+350;
+
+const enemy=players.find(
+p=>p.id===target&&!p.dead
+);
+
+if(!enemy)return;
+
+const safe=p=>p.team==='Human'?
+p.x< -18:p.x>18;
+
+if(safe(me)||safe(enemy)){
+
+notice('Guvenli bolgede saldiri yasak');
+return;
 }
+
+const ranges={
+Warrior:4,
+Archer:15,
+Mage:16,
+Assassin:3.5
+};
+
+if(Math.hypot(
+enemy.x-me.x,
+enemy.z-me.z
+)>ranges[me.c]){
+
+notice('Rakip cok uzakta');
+return;
+}
+
+if(me.mp<8){
+
+notice('Yetersiz MP');
+return;
+}
+
+send({t:'hit',id:target});
+
+swingUntil=performance.now()+350;
 };
 
 $('pot').onclick=()=>send({t:'pot'});
 
 $('cameraBtn').onclick=()=>{
-const me=models.get(myId);
 
-if(me){
-const desired=me.rotation.y+Math.PI;
-yaw=smoothYaw+Math.atan2(
-Math.sin(desired-smoothYaw),
-Math.cos(desired-smoothYaw));
-}
-
-pitch=0.48;
-distance=9;
-};
-
-$('full').onclick=async()=>{
-try{
-if(!document.fullscreenElement){
-await document.documentElement.requestFullscreen();
-try{
-await screen.orientation.lock('landscape');
-}catch{}
-}else{
-await document.exitFullscreen();
-try{screen.orientation.unlock()}catch{}
-}
-}catch{}
-};
-
-const keys=new Set();
-
-function keyboardMove(){
-move(
-Number(keys.has('d')||keys.has('arrowright'))-
-Number(keys.has('a')||keys.has('arrowleft')),
-Number(keys.has('s')||keys.has('arrowdown'))-
-Number(keys.has('w')||keys.has('arrowup')));
-}
-
-addEventListener('keydown',e=>{
-if($('login').style.display!=='none')return;
-keys.add(e.key.toLowerCase());
-keyboardMove();
-if(e.code==='Space')$('attack').click();
-});
-
-addEventListener('keyup',e=>{
-keys.delete(e.key.toLowerCase());
-keyboardMove();
-});
-
-addEventListener('blur',()=>{
-keys.clear();
-touches.clear();
-stop();
-});
-
-document.addEventListener('visibilitychange',()=>{
-if(document.hidden){
-keys.clear();
-touches.clear();
-stop();
-}
-});
-
-const ctx=$('map').getContext('2d');
-
-function minimap(){
-ctx.clearRect(0,0,104,104);
-ctx.fillStyle='#3e5130';
-ctx.fillRect(0,0,104,104);
-ctx.fillStyle='#99917d';
-ctx.fillRect(0,47,104,10);
-
-for(const p of players){
-if(p.dead)continue;
-
-ctx.fillStyle=p.id===myId?'#ffffff':
-p.team==='Human'?'#52aaff':'#ff5555';
-
-ctx.beginPath();
-ctx.arc(52+p.x*1.2,52+p.z*1.2,
-p.id===myId?4:3,0,Math.PI*2);
-ctx.fill();
-}
-}
-
-addEventListener('resize',()=>{
-camera.aspect=innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth,innerHeight);
-});
-
-camera.position.set(0,8,12);
-
-const clock=new THREE.Clock();
-const focus=new THREE.Vector3();
-let started=false;
-
-function animate(){
-requestAnimationFrame(animate);
-
-const dt=Math.min(clock.getDelta(),0.1);
-const alpha=1-Math.exp(-15*dt);
-const time=performance.now();
-
-for(const p of players){
-const g=models.get(p.id);
-if(!g)continue;
-
-g.position.x+=(g.userData.tx-g.position.x)*alpha;
-g.position.z+=(g.userData.tz-g.position.z)*alpha;
-
-const walking=!p.dead&&
-(Math.abs(p.dx)+Math.abs(p.dz)>0.05);
-
-if(walking){
-const angle=Math.atan2(p.dx,p.dz);
-const diff=angle-g.rotation.y;
-
-g.rotation.y+=Math.atan2(
-Math.sin(diff),Math.cos(diff))*alpha;
-}
-
-const step=walking?Math.sin(time*0.012)*0.65:0;
-
-g.userData.legs[0].rotation.x=step;
-g.userData.legs[1].rotation.x=-step;
-g.userData.arms[0].rotation.x=-step*0.6;
-g.userData.arms[1].rotation.x=step*0.6;
-
-g.userData.body.position.y=walking?
-Math.abs(Math.sin(time*0.012))*0.045:0;
-
-g.userData.cape.rotation.x=walking?
-0.25+Math.sin(time*0.009)*0.07:0.03;
-
-if(p.id===myId&&time<swingUntil){
-g.userData.arms[1].rotation.x=
--2*Math.sin((swingUntil-time)/350*Math.PI);
-}
-}
-
-const me=models.get(myId);
-
-if(me){
-const a=1-Math.exp(-18*dt);
-
-smoothYaw+=(yaw-smoothYaw)*a;
-smoothPitch+=(pitch-smoothPitch)*a;
-smoothDistance+=(distance-smoothDistance)*a;
-
-if(!started){
-focus.set(me.position.x,1.4,me.position.z);
-started=true;
-}
-
-focus.x+=(me.position.x-focus.x)*alpha;
-focus.z+=(me.position.z-focus.z)*alpha;
-
-camera.position.set(
-focus.x+Math.sin(smoothYaw)*Math.cos(smoothPitch)*smoothDistance,
-focus.y+Math.sin(smoothPitch)*smoothDistance,
-focus.z+Math.cos(smoothYaw)*Math.cos(smoothPitch)*smoothDistance
-);
-
-camera.lookAt(focus);
-
-}else{
-camera.lookAt(0,0,0);
-}
-
-minimap();
-renderer.render(scene,camera);
-}
-
-animate();
-</script>
-</body>
-</html>
+const me=m
