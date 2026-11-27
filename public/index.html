@@ -106,7 +106,16 @@ h1{color:#e5c989}
 </div>
 
 <div id="version">Classic PvP v0.5</div>
-
+<script>
+window.addEventListener('error', function(e) {
+  document.getElementById('message').textContent =
+    'HATA: ' + e.message + ' Satir: ' + e.lineno;
+});
+window.addEventListener('unhandledrejection', function(e) {
+  document.getElementById('message').textContent =
+    'HATA: ' + String(e.reason);
+});
+</script>
 <script type="module">
 import * as THREE from '/three/three.module.js';
 
