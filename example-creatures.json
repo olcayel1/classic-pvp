@@ -1,13 +1,65 @@
 {
-  "id": "example-creatures",
-  "name": "Örnek Yaratık Paketi",
+  "id": "example-expansion",
+  "name": "Örnek Yaratık Eşya ve Harita Paketi",
+  "maps": [
+    {
+      "id": "moonvale",
+      "name": "Ay Vadisi",
+      "x": -520,
+      "z": -520,
+      "level": 30,
+      "team": "",
+      "color": "#4f8973",
+      "radius": 50
+    }
+  ],
   "creatures": [
     {
       "map": "pine",
       "name": "Orman Gölgesi",
       "level": 12,
       "count": 4,
-      "health": 360
+      "health": 360,
+      "combat": {
+        "damage": 28,
+        "armor": 14,
+        "expReward": 120,
+        "attackCooldownMs": 1800,
+        "moveSpeed": 0.09
+      },
+      "spawn": {
+        "x": 300,
+        "z": 300,
+        "radius": 10
+      }
+    },
+    {
+      "map": "moonvale",
+      "name": "Ay Muhafızı",
+      "level": 32,
+      "count": 3,
+      "health": 900,
+      "combat": {
+        "damage": 68,
+        "armor": 24,
+        "expReward": 420,
+        "attackCooldownMs": 2100,
+        "moveSpeed": 0.08
+      },
+      "spawn": {
+        "radius": 12
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "moonblade",
+      "name": "Ay Kılıcı",
+      "slot": "weapon",
+      "power": 24,
+      "cls": "Warrior",
+      "tier": "Rare",
+      "crit": 0.12
     }
   ]
 }
