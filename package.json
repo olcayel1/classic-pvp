@@ -1,1 +1,16 @@
-{"name":"classic-pvp-alpha","version":"1.0.0","scripts":{"start":"node server.js"},"dependencies":{"express":"^4.21.2","ws":"^8.18.0","three":"0.170.0"}}
+{
+  "name": "classic-pvp-75",
+  "version": "75.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "three": "^0.180.0",
+    "ws": "^8.18.0"
+  }
+}
