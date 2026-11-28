@@ -1,0 +1,13 @@
+{
+  "id": "example-creatures",
+  "name": "Örnek Yaratık Paketi",
+  "creatures": [
+    {
+      "map": "pine",
+      "name": "Orman Gölgesi",
+      "level": 12,
+      "count": 4,
+      "health": 360
+    }
+  ]
+}
